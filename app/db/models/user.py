@@ -8,23 +8,44 @@ from sqlalchemy.orm import relationship
 from app.db.base_class import Base
 
 
-subscriptions = Table(
-    "subscriptions",
-    Base.metadata,
-    Column("user_id", ForeignKey("user.id")),
-    Column("subscriber_id", ForeignKey("user.id")),
-)
+# subscriptions = Table(
+#     "subscriptions",
+#     Base.metadata,
+#     Column("user_id", ForeignKey("myuser.id")),
+#     Column("subscriber_id", ForeignKey("myuser.id")),
+# )
+
+
+class Subscription(Base):
+    __tablename__ = 'subscriptions'
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"),
+                                         primary_key=True
+                                         )
+    user: Mapped["User"] = relationship(
+        lazy='joined',
+        uselist=False,
+        foreign_keys=[user_id]
+    )
+    subscriber_id: Mapped[int] = mapped_column(ForeignKey("users.id"),
+                                               primary_key=True
+                                               )
+    subscriber: Mapped["User"] = relationship(
+        lazy='joined',
+        uselist=False,
+        foreign_keys=[subscriber_id]
+    )
 
 
 class User(Base):
-    __tablename__ = 'user'
+    __tablename__ = 'users'
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(30), unique=True)
     admin: Mapped[bool] = mapped_column(server_default='false')
     password: Mapped[str] = mapped_column(String(1024))
     subscriptions: Mapped[List["User"]] = relationship(
         lazy='selectin',
-        secondary=subscriptions,
-        primaryjoin=(subscriptions.c.subscriber_id == id),
-        secondaryjoin=(subscriptions.c.user_id == id)
+        secondary='subscriptions',
+        primaryjoin=(Subscription.subscriber_id == id),
+        secondaryjoin=(Subscription.user_id == id),
+        join_depth=2
     )

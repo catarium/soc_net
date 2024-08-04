@@ -10,7 +10,7 @@ from app.utils.response import Response
 router = APIRouter(prefix='')
 
 
-class PostGetSchema(BaseModel):
+class PostGetRequestSchema(BaseModel):
     name: Optional[str] = None
     creator_id: Optional[int] = None
     offset: int = 0
@@ -24,7 +24,8 @@ async def get(request: Request, post_id: int):
 
 
 @router.get('/')
-async def search(request: Request, post_schema: PostGetSchema=Depends()):
+async def search(request: Request,
+                 post_schema: PostGetRequestSchema = Depends()):
     res = await PostService().get(
         offset=post_schema.offset,
         limit=post_schema.limit,

@@ -15,6 +15,13 @@ class SubscriptionCreateSchema(BaseModel):
 
 
 @router.post('/',)
-async def create(request: Request, subscriber_schema: SubscriptionCreateSchema, user=Depends(session_user)):
-    res = await UserService().subscribe_user(subscriber_schema.user_id, user.id)
-    return Response()
+async def create(
+        request: Request,
+        subscription_schema: SubscriptionCreateSchema,
+        user=Depends(session_user)
+):
+    res = await UserService().add_subscription(
+        user.id,
+        subscription_schema.user_id,
+    )
+    return Response(res=res)

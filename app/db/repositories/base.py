@@ -54,7 +54,7 @@ class BaseRepository(Generic[ModelType]):
         if custom_order is None:
             custom_select = custom_select.order_by(self.model.id.desc())
         else:
-            custom_select = custom_select.order_by(custom_order)
+            custom_select = custom_select.order_by(*custom_order)
         if custom_limit:
             custom_select = custom_select.limit(custom_limit)
         if custom_offset:

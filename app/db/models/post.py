@@ -9,9 +9,9 @@ from app.db.base_class import Base
 
 
 class Post(Base):
-    __tablename__ = 'post'
+    __tablename__ = 'posts'
     id: Mapped[int] = mapped_column(primary_key=True)
-    creator_id: Mapped[int] = mapped_column(ForeignKey('user.id'))
+    creator_id: Mapped[int] = mapped_column(ForeignKey('users.id'))
     creator: Mapped["User"] = relationship(
         lazy='joined',
         uselist=False

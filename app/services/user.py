@@ -1,4 +1,7 @@
+from typing import List
+
 from app.db.models.user import User
+from app.db.repositories.subscription import SubscriptionRepository
 from app.db.repositories.user import UserRepository
 from app.utils.password_hashing.hash_password import get_password_hash
 
@@ -18,14 +21,21 @@ class AdminUserGetResponseSchema(BaseModel):
     password: str
 
 
+class SubscriptionUserGetResponseSchema(BaseModel):
+    id: int
+    name: str
+
+
 class UserGetResponseSchema(BaseModel):
     id: int
     name: str
+    subscriptions: List[SubscriptionUserGetResponseSchema]
 
 
 class PersonalUserGetResponseSchema(BaseModel):
     id: int
     name: str
+    subscriptions: List[SubscriptionUserGetResponseSchema]
 
 
 class UserService:
@@ -38,9 +48,9 @@ class UserService:
         db_obj = await UserRepository().create(name=name,
                                                password=hashed_password)
         return UserCreateResponseSchema(
-                                        id=db_obj.id,
-                                        name=db_obj.name,
-                                        password=db_obj.password
+            id=db_obj.id,
+            name=db_obj.name,
+            password=db_obj.password
         )
 
     async def get_by_id_admin(self, user_id) -> AdminUserGetResponseSchema:
@@ -54,9 +64,14 @@ class UserService:
         if not db_obj:
             raise HTTPException(status_code=404, detail='user not found')
         return AdminUserGetResponseSchema(
-                                     name=db_obj.name,
-                                     password=db_obj.password,
-                                     id=db_obj.id
+            id=db_obj.id,
+            name=db_obj.name,
+            password=db_obj.password,
+            subscriptions=[SubscriptionUserGetResponseSchema(id=sbp.id,
+                                                             name=sbp.name
+                                                             )
+                           for sbp in db_obj.subscriptions
+                           ]
         )
 
     async def get_personal(self, user_id) -> PersonalUserGetResponseSchema:
@@ -64,8 +79,13 @@ class UserService:
         if not db_obj:
             raise HTTPException(status_code=404, detail='user not found')
         return PersonalUserGetResponseSchema(
+            id=db_obj.id,
             name=db_obj.name,
-            id=db_obj.id
+            subscriptions=[SubscriptionUserGetResponseSchema(id=sbp.id,
+                                                             name=sbp.name
+                                                             )
+                           for sbp in db_obj.subscriptions
+                           ]
         )
 
     async def get_by_id(self, user_id) -> UserGetResponseSchema:
@@ -79,14 +99,71 @@ class UserService:
         if not db_obj:
             raise HTTPException(status_code=404, detail='user not found')
         return UserGetResponseSchema(
+            id=db_obj.id,
             name=db_obj.name,
-            id=db_obj.id
+            subscriptions=[SubscriptionUserGetResponseSchema(id=sbp.id,
+                                                             name=sbp.name
+                                                             )
+                           for sbp in db_obj.subscriptions
+                           ]
         )
 
-    async def subscribe_user(self, user_id, subscriber_id):
-        await UserRepository().subscribe_user(user_id, subscriber_id)
-        return True
+    async def add_subscription(self, subscriber_id, user_id):
+        if subscriber_id == user_id:
+            raise HTTPException(
+                status_code=422,
+                detail='subscription to oneself'
+            )
+        user = await UserRepository().get_by_id(subscriber_id)
+        if user_id in list(map(lambda x: x.id, user.subscriptions)):
+            raise HTTPException(
+                status_code=400,
+                detail='subscription already exists'
+            )
+        db_obj = await UserRepository().add_subscription(subscriber_id,
+                                                         user_id)
+        return PersonalUserGetResponseSchema(
+            id=db_obj.id,
+            name=db_obj.name,
+            subscriptions=[SubscriptionUserGetResponseSchema(id=sbp.id,
+                                                             name=sbp.name
+                                                             )
+                           for sbp in db_obj.subscriptions
+                           ]
+        )
 
-    # async def get_by_name(self, name):
-    #     db_obj = await UserRepository().select(name=name)
-    #     if not db_obj:
+    async def delete_subscription(self, subscriber_id, user_id):
+        subscriber = await UserRepository().get_by_id(subscriber_id)
+        if user_id not in list(map(lambda x: x.id, subscriber.subscriptions)):
+            raise HTTPException(status_code=404,
+                                detail='user does not exist or is not '
+                                       'subscribed '
+                                )
+        db_obj = await UserRepository().delete_subscription(
+            subscriber_id,
+            user_id
+        )
+        return PersonalUserGetResponseSchema(
+            id=db_obj.id,
+            name=db_obj.name,
+            subscriptions=[SubscriptionUserGetResponseSchema(id=sbp.id,
+                                                             name=sbp.name
+                                                             )
+                           for sbp in db_obj.subscriptions
+                           ]
+        )
+
+    async def get_by_subscription(self, type, user_id, offset, limit):
+        subscriptions = await SubscriptionRepository().get_by_user_id(
+            offset,
+            limit,
+            **{type: user_id}
+        )
+        if type == 'user_id':
+            return [SubscriptionUserGetResponseSchema(id=s.subscriber.id,
+                                                      name=s.subscriber.name)
+                    for s in subscriptions]
+        elif type == 'subscriber_id':
+            return [SubscriptionUserGetResponseSchema(id=s.user.id,
+                                                      name=s.user.name)
+                    for s in subscriptions]

@@ -9,14 +9,14 @@ from app.utils.response import Response
 router = APIRouter(prefix='')
 
 
-class PostUpdateSchema(BaseModel):
+class PostUpdateRequestSchema(BaseModel):
     id: int
     name: str = Field(max_length=120, default='')
     text: str = Field()
 
 
 @router.put('/',)
-async def update(request: Request, post_schema: PostUpdateSchema, user=Depends(session_user)):
+async def update(request: Request, post_schema: PostUpdateRequestSchema, user=Depends(session_user)):
     res = await PostService().update(
         post_id=post_schema.id,
         name=post_schema.name,

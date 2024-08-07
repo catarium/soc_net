@@ -7,7 +7,7 @@ from sqlalchemy import and_
 
 from app.db.models import Post
 from app.db.repositories.post import PostRepository
-from app.utils.datetime_utils import aware_utcnow
+from app.utils.datetime_utils import aware_utcnow, naive_utcnow
 
 
 class PostUserResponseSchema(BaseModel):
@@ -86,7 +86,7 @@ class PostService:
         await PostRepository().update(
             db_obj,
             creator_id=creator_id,
-            updated_time=aware_utcnow().timestamp(),
+            updated_time=naive_utcnow(),
             name=name,
             text=text
         )
@@ -94,7 +94,6 @@ class PostService:
         return PostUpdateResponseSchema(
             id=db_obj.id,
             creation_time=db_obj.creation_time.timestamp(),
-            updated_time=db_obj.updated_time,
             updated=db_obj.updated_time.timestamp(),
             name=db_obj.name,
             text=db_obj.text,

@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field
 
 from app.services.post import PostService
 from app.services.user import UserService
+from app.utils.datetime_utils import aware_utcnow
 from app.utils.response import Response
 
 router = APIRouter(prefix='')
@@ -13,6 +14,8 @@ router = APIRouter(prefix='')
 class PostGetRequestSchema(BaseModel):
     name: Optional[str] = None
     creator_id: Optional[int] = None
+    created_before: Optional[float] = aware_utcnow().timestamp()
+    created_after: Optional[float] = 0
     offset: int = 0
     limit: int = 10
 
@@ -30,6 +33,8 @@ async def search(request: Request,
         offset=post_schema.offset,
         limit=post_schema.limit,
         name=post_schema.name,
-        creator_id=post_schema.creator_id
+        creator_id=post_schema.creator_id,
+        created_after=post_schema.created_after,
+        created_before=post_schema.created_before
     )
     return Response(res=res)

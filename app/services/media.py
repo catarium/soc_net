@@ -31,10 +31,11 @@ class MediaService:
                      content_type: str
                      ):
         filename = f'{uuid4().hex}.{content_type.split("/")[1]}'
-        db_obj = await MediaRepository().create(creator_id=creator_id,
-                                       content_type=content_type,
-                                       filename=filename
-                                       )
+        db_obj = await MediaRepository().create(
+            creator_id=creator_id,
+            content_type=content_type,
+            filename=filename
+        )
         with open(f'static/images/{filename}', 'wb') as f:
             f.write(file_obj.read())
         return MediaCreateResponseSchema(
@@ -42,4 +43,3 @@ class MediaService:
             content_type=db_obj.content_type,
             filename=db_obj.filename
         )
-

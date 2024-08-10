@@ -2,6 +2,7 @@ from typing import List
 from typing import Optional
 
 from sqlalchemy import ForeignKey
+from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import Mapped
 from sqlalchemy.orm import mapped_column
 from sqlalchemy.orm import relationship
@@ -39,7 +40,7 @@ class MediaComments(Base):
         foreign_keys=[media_id]
     )
     comment_id: Mapped[int] = mapped_column(ForeignKey('comments.id'),
-                                         primary_key=True)
+                                            primary_key=True)
     comment: Mapped["Comment"] = relationship(
         lazy='joined',
         uselist=False,
@@ -55,4 +56,21 @@ class Media(Base):
         uselist=False
     )
     content_type: Mapped[str] = mapped_column()
-    filename: Mapped[str] = mapped_column(primary_key=True, unique=True)
+    _filename: Mapped[str] = mapped_column(
+        name='filename',
+        primary_key=True,
+        unique=True
+    )
+
+    # returns filename instead of id, because filename is actually an id
+    @hybrid_property
+    def id(self):
+        return self._filename
+
+    @hybrid_property
+    def filename(self):
+        return self._filename
+
+    @filename.setter
+    def filename(self, filename):
+        self._filename = filename

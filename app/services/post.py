@@ -1,3 +1,4 @@
+from copy import deepcopy
 from datetime import datetime
 from typing import List
 
@@ -6,6 +7,7 @@ from pydantic import BaseModel
 from sqlalchemy import and_
 
 from app.db.models import Post
+from app.db.repositories.media import MediaRepository
 from app.db.repositories.post import PostRepository
 from app.utils.datetime_utils import aware_utcnow, naive_utcnow
 
@@ -22,12 +24,27 @@ class PostUserResponseSchema(BaseModel):
         )
 
 
+class PostMediaResponseSchema(BaseModel):
+    creator: PostUserResponseSchema
+    content_type: str
+    filename: str
+
+    @staticmethod
+    def from_sqlalchemy(orm_model):
+        return PostMediaResponseSchema(
+            creator=PostUserResponseSchema.from_sqlalchemy(orm_model.creator),
+            content_type=orm_model.content_type,
+            filename=orm_model.filename
+        )
+
+
 class PostCreateResponseSchema(BaseModel):
     id: int
     creation_time: float
     updated: float | None
     name: str
     text: str
+    media: list[PostMediaResponseSchema]
     creator: PostUserResponseSchema
 
 
@@ -37,6 +54,7 @@ class PostGetResponseSchema(BaseModel):
     updated: float | None
     name: str
     text: str
+    media: list[PostMediaResponseSchema]
     creator: PostUserResponseSchema
 
 
@@ -46,6 +64,7 @@ class PostUpdateResponseSchema(BaseModel):
     updated: float | None
     name: str
     text: str
+    media: list[PostMediaResponseSchema]
     creator: PostUserResponseSchema
 
 
@@ -55,15 +74,23 @@ class PostDeleteResponseSchema(BaseModel):
     updated: float | None
     name: str
     text: str
+    media: list[PostMediaResponseSchema]
     creator: PostUserResponseSchema
 
 
 class PostService:
-    async def create(self, creator_id, name, text):
+    async def create(self, creator_id, name, text, media):
+        media_objs = []
+        for m in media:
+            m_obj = await MediaRepository().get_by_id(m)
+            if not m_obj:
+                raise HTTPException(status_code=404, detail='media not found')
+            media_objs.append(m_obj)
         db_obj = await PostRepository().create(
             creator_id=creator_id,
             name=name,
-            text=text
+            text=text,
+            media=media_objs
         )
         return PostCreateResponseSchema(
             id=db_obj.id,
@@ -72,7 +99,11 @@ class PostService:
                 db_obj.updated_time.timestamp() if db_obj.updated_time else None),
             name=db_obj.name,
             text=db_obj.text,
-            creator=PostUserResponseSchema.from_sqlalchemy(db_obj.creator)
+            media=[
+                PostMediaResponseSchema.from_sqlalchemy(m)
+                for m in db_obj.media
+            ],
+            creator=PostUserResponseSchema.from_sqlalchemy(db_obj.creator),
         )
 
     async def update(self, creator_id, post_id, **values):
@@ -97,6 +128,10 @@ class PostService:
             updated=db_obj.updated_time.timestamp(),
             name=db_obj.name,
             text=db_obj.text,
+            media=[
+                PostMediaResponseSchema.from_sqlalchemy(m)
+                for m in db_obj.media
+            ],
             creator=PostUserResponseSchema.from_sqlalchemy(db_obj.creator)
         )
 
@@ -117,7 +152,11 @@ class PostService:
                      else None),
             creator=PostUserResponseSchema.from_sqlalchemy(db_obj.creator),
             name=db_obj.name,
-            text=db_obj.text
+            text=db_obj.text,
+            media=[
+                PostMediaResponseSchema.from_sqlalchemy(m)
+                for m in db_obj.media
+            ],
         )
 
     async def get(self,
@@ -131,8 +170,8 @@ class PostService:
             custom_where=(and_(
                 datetime.fromtimestamp(created_after) < Post.creation_time,
                 Post.creation_time < datetime.fromtimestamp(created_before)
-                )
-                          ),
+            )
+            ),
             custom_offset=offset,
             custom_limit=limit,
             **filters
@@ -144,7 +183,12 @@ class PostService:
                 db_obj.updated_time.timestamp() if db_obj.updated_time else None),
             creator=PostUserResponseSchema.from_sqlalchemy(db_obj.creator),
             name=db_obj.name,
-            text=db_obj.text)
+            text=db_obj.text,
+            media=[
+                PostMediaResponseSchema.from_sqlalchemy(m)
+                for m in db_obj.media
+            ],
+        )
             for db_obj in db_objs]
 
     async def delete(self, creator_id, post_id):
@@ -156,6 +200,11 @@ class PostService:
                 status_code=403,
                 detail='user is not the post creator'
             )
+        media = [
+                    PostMediaResponseSchema.from_sqlalchemy(m)
+                    for m in db_obj.media
+                ]
+        db_obj = await PostRepository().update(db_obj, media=[])
         db_obj = await PostRepository().delete(db_obj)
         return PostDeleteResponseSchema(
             id=db_obj.id,
@@ -164,5 +213,6 @@ class PostService:
                 db_obj.updated_time.timestamp() if db_obj.updated_time else None),
             name=db_obj.name,
             text=db_obj.text,
+            media=media,
             creator=PostUserResponseSchema.from_sqlalchemy(db_obj.creator),
         )

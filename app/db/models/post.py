@@ -23,7 +23,8 @@ class Post(Base):
                                                           nullable=True)
     name: Mapped[str] = mapped_column(String(120))
     text: Mapped[str]
-    media: Mapped["Media"] = relationship(
+    media: Mapped[List["Media"]] = relationship(
         lazy='selectin',
         secondary='media_posts',
+        uselist=True
     )

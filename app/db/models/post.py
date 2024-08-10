@@ -19,9 +19,11 @@ class Post(Base):
         lazy='joined',
         uselist=False
     )
-    creation_time: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=False),
-                                                    server_default=func.now())
     updated_time: Mapped[datetime | None] = mapped_column(TIMESTAMP(timezone=False),
                                                           nullable=True)
     name: Mapped[str] = mapped_column(String(120))
     text: Mapped[str]
+    media: Mapped["Media"] = relationship(
+        lazy='selectin',
+        secondary='media_posts',
+    )

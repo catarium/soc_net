@@ -1,3 +1,5 @@
+from typing import Optional
+
 from fastapi import APIRouter, Request, Depends
 from pydantic import BaseModel, Field
 
@@ -10,17 +12,15 @@ router = APIRouter(prefix='')
 
 
 class PostUpdateRequestSchema(BaseModel):
-    id: int
-    name: str = Field(max_length=120, default='')
-    text: str = Field()
+    post_id: int
+    name: Optional[str] = Field(max_length=120, default=None)
+    text: Optional[str] = Field(default=None)
 
 
 @router.put('/',)
 async def update(request: Request, post_schema: PostUpdateRequestSchema, user=Depends(session_user)):
     res = await PostService().update(
-        post_id=post_schema.id,
-        name=post_schema.name,
-        text=post_schema.text,
-        creator_id=user.id
+        creator_id=user.id,
+        **post_schema.model_dump(exclude_unset=True)
     )
     return Response(res=res)

@@ -68,13 +68,14 @@ class PostService:
         return PostCreateResponseSchema(
             id=db_obj.id,
             creation_time=db_obj.creation_time.timestamp(),
-            updated=(db_obj.updated_time.timestamp() if db_obj.updated_time else None),
+            updated=(
+                db_obj.updated_time.timestamp() if db_obj.updated_time else None),
             name=db_obj.name,
             text=db_obj.text,
             creator=PostUserResponseSchema.from_sqlalchemy(db_obj.creator)
         )
 
-    async def update(self, creator_id, post_id, name, text):
+    async def update(self, creator_id, post_id, **values):
         db_obj = await PostRepository().get_by_id(post_id)
         if not db_obj:
             raise HTTPException(status_code=404, detail='post not found')
@@ -87,8 +88,7 @@ class PostService:
             db_obj,
             creator_id=creator_id,
             updated_time=naive_utcnow(),
-            name=name,
-            text=text
+            **values
         )
 
         return PostUpdateResponseSchema(
@@ -113,7 +113,8 @@ class PostService:
         return PostGetResponseSchema(
             id=db_obj.id,
             creation_time=db_obj.creation_time.timestamp(),
-            updated=(db_obj.updated_time.timestamp() if db_obj.updated_time else None),
+            updated=(db_obj.updated_time.timestamp() if db_obj.updated_time
+                     else None),
             creator=PostUserResponseSchema.from_sqlalchemy(db_obj.creator),
             name=db_obj.name,
             text=db_obj.text
@@ -127,8 +128,10 @@ class PostService:
                   **filters) -> List[PostGetResponseSchema]:
         filters = {k: v for k, v in filters.items() if v is not None}
         db_objs = await PostRepository().select(
-            custom_where=(and_(datetime.fromtimestamp(created_after) < Post.creation_time, Post.creation_time < datetime.fromtimestamp(created_before)
-                               )
+            custom_where=(and_(
+                datetime.fromtimestamp(created_after) < Post.creation_time,
+                Post.creation_time < datetime.fromtimestamp(created_before)
+                )
                           ),
             custom_offset=offset,
             custom_limit=limit,
@@ -137,11 +140,12 @@ class PostService:
         return [PostGetResponseSchema(
             id=db_obj.id,
             creation_time=db_obj.creation_time.timestamp(),
-            updated=(db_obj.updated_time.timestamp() if db_obj.updated_time else None),
+            updated=(
+                db_obj.updated_time.timestamp() if db_obj.updated_time else None),
             creator=PostUserResponseSchema.from_sqlalchemy(db_obj.creator),
             name=db_obj.name,
             text=db_obj.text)
-        for db_obj in db_objs]
+            for db_obj in db_objs]
 
     async def delete(self, creator_id, post_id):
         db_obj = await PostRepository().get_by_id(post_id)
@@ -156,9 +160,9 @@ class PostService:
         return PostDeleteResponseSchema(
             id=db_obj.id,
             creation_time=db_obj.creation_time.timestamp(),
-            updated=(db_obj.updated_time.timestamp() if db_obj.updated_time else None),
+            updated=(
+                db_obj.updated_time.timestamp() if db_obj.updated_time else None),
             name=db_obj.name,
             text=db_obj.text,
             creator=PostUserResponseSchema.from_sqlalchemy(db_obj.creator),
         )
-

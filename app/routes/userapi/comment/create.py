@@ -16,7 +16,10 @@ class CommentCreateRequestSchema(BaseModel):
 
 
 @router.post('/',)
-async def create(request: Request, comment_schema: CommentCreateRequestSchema, user=Depends(session_user)):
+async def create(request: Request,
+                 comment_schema: CommentCreateRequestSchema,
+                 user=Depends(session_user)
+                 ):
     res = await CommentService().create(creator_id=user.id,
                                   post_id=comment_schema.post_id,
                                   text=comment_schema.text

@@ -15,7 +15,10 @@ class PostCreateRequestSchema(BaseModel):
 
 
 @router.post('/',)
-async def create(request: Request, post_schema: PostCreateRequestSchema, user=Depends(session_user)):
+async def create(request: Request,
+                 post_schema: PostCreateRequestSchema,
+                 user=Depends(session_user)
+                 ):
     res = await PostService().create(
         name=post_schema.name,
         text=post_schema.text,

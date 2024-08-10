@@ -8,6 +8,6 @@ import logging
 logging.basicConfig()
 logging.getLogger("sqlalchemy.engine").setLevel(logging.DEBUG)
 
-app = FastAPI()
+app = FastAPI(root_path='/api')
 app.include_router(main_router)
 app.add_middleware(SessionMiddleware, secret_key='test')

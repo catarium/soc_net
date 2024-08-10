@@ -1,0 +1,57 @@
+version: "3"
+services:
+  db:
+    image: postgres:10.13
+    restart: on-failure
+#    ports:
+#      - 5433:5432
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - ./data/postgres-data:/var/lib/postgresql/data
+  app:
+    build: "."
+    env_file:
+      - .env
+#    ports:
+#      - 8000:8000
+    depends_on:
+      - db
+    volumes:
+      - ./static:/app/static
+    networks:
+      - default
+      - custom
+  pgadmin:
+    image: dpage/pgadmin4:6.4
+    ports:
+      - "9002:9003"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: test@test.com
+      PGADMIN_DEFAULT_PASSWORD: test
+    restart: on-failure
+    depends_on:
+      - db
+  web:
+    container_name: "web"
+    image: nginx:alpine
+    depends_on:
+      - app
+    ports:
+      - "8082:80"
+    volumes:
+      - ./web/conf.d:/etc/nginx/conf.d
+      - ./templates:/etc/nginx/templates
+      - ./static:/etc/nginx/static
+    networks:
+      - custom
+
+volumes:
+  static-content:
+
+networks:
+  custom:
+    driver: bridge
+

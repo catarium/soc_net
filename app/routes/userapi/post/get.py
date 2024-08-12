@@ -17,7 +17,7 @@ class PostGetRequestSchema(BaseModel):
     created_before: Optional[float] = aware_utcnow().timestamp()
     created_after: Optional[float] = 0
     offset: int = 0
-    limit: int = 10
+    limit: int = Field(default=10, ge=1, le=30)
 
 
 @router.get('/{post_id}')

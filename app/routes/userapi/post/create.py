@@ -12,13 +12,13 @@ router = APIRouter(prefix='')
 
 class PostCreateRequestSchema(BaseModel):
     name: str = Field(max_length=120)
-    text: str = Field()
+    text: str = None
     media: list[str] = None
 
     @model_validator(mode="after")
     def there_must_be_one(self):
-        if not (self.text or self.images):
-            raise ValidationError("One parameter must be specified")
+        if not (self.text or self.media):
+            raise ValueError("One parameter must be specified")
         return self
 
 

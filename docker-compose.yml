@@ -2,7 +2,6 @@ version: "3"
 services:
   db:
     image: postgres:10.13
-    restart: on-failure
 #    ports:
 #      - 5433:5432
     environment:
@@ -21,19 +20,21 @@ services:
       - db
     volumes:
       - ./static:/app/static
+      - ./alembic:/app/alembic
     networks:
       - default
       - custom
   pgadmin:
     image: dpage/pgadmin4:6.4
     ports:
-      - "9002:9003"
+      - "9002:80"
     environment:
       PGADMIN_DEFAULT_EMAIL: test@test.com
       PGADMIN_DEFAULT_PASSWORD: test
-    restart: on-failure
     depends_on:
       - db
+    networks:
+      - default
   web:
     container_name: "web"
     image: nginx:alpine

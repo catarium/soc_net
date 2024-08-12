@@ -15,6 +15,7 @@ class PostUpdateRequestSchema(BaseModel):
     post_id: int
     name: Optional[str] = Field(max_length=120, default=None)
     text: Optional[str] = Field(default=None)
+    media: list[str] = None
 
 
 @router.put('/',)

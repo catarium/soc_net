@@ -15,18 +15,19 @@ class MediaPosts(Base):
                                           primary_key=True
                                           )
 
-    media: Mapped["Media"] = relationship(
-        lazy='joined',
-        uselist=False,
-        foreign_keys=[media_id]
-    )
+    # media: Mapped["Media"] = relationship(
+    #     lazy='joined',
+    #     uselist=False,
+    #     foreign_keys=[media_id]
+    # )
     post_id: Mapped[int] = mapped_column(ForeignKey('posts.id'),
                                          primary_key=True)
-    post: Mapped["Post"] = relationship(
-        lazy='joined',
-        uselist=False,
-        foreign_keys=[post_id]
-    )
+    # post: Mapped["Post"] = relationship(
+    #     lazy='joined',
+    #     uselist=False,
+    #     foreign_keys=[post_id],
+    #     back_populates='media'
+    # )
 
 
 class MediaComments(Base):
@@ -34,18 +35,18 @@ class MediaComments(Base):
     media_id: Mapped[int] = mapped_column(ForeignKey('media.filename'),
                                           primary_key=True
                                           )
-    media: Mapped["Media"] = relationship(
-        lazy='joined',
-        uselist=False,
-        foreign_keys=[media_id]
-    )
+    # media: Mapped["Media"] = relationship(
+    #     lazy='joined',
+    #     uselist=False,
+    #     # foreign_keys=[media_id]
+    # )
     comment_id: Mapped[int] = mapped_column(ForeignKey('comments.id'),
                                             primary_key=True)
-    comment: Mapped["Comment"] = relationship(
-        lazy='joined',
-        uselist=False,
-        foreign_keys=[comment_id]
-    )
+    # comment: Mapped["Comment"] = relationship(
+    #     lazy='joined',
+    #     uselist=False,
+    #     # foreign_keys=[comment_id]
+    # )
 
 
 class Media(Base):

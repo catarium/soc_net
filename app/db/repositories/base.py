@@ -25,14 +25,17 @@ class BaseRepository(Generic[ModelType]):
 
             return db_obj
 
-    async def update(self, model: ModelType, **obj_in_data) -> ModelType:
+    async def update(self, db_obj: ModelType, **obj_in_data) -> ModelType:
         async with self._get_session() as session:
             for field, value in obj_in_data.items():
-                setattr(model, field, obj_in_data[field])
-            session.add(model)
+                setattr(db_obj, field, value)
+
+            merged_db_obj = await session.merge(db_obj)
+
+            session.add(merged_db_obj)
+
             await session.commit()
-            await session.refresh(model)
-            return model
+            return db_obj
 
     async def get_by_id(self, obj_id: int) -> ModelType | None:
         res = (await self.select(id=obj_id))
@@ -65,7 +68,7 @@ class BaseRepository(Generic[ModelType]):
             print(custom_select.filter_by(**filters))
             result = await session.execute(custom_select.filter_by(**filters))
             res = result.scalars().all()
-            return res
+        return res
 
     async def delete(self, model: ModelType) -> Optional[ModelType]:
         async with self._get_session() as session:

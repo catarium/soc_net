@@ -43,7 +43,7 @@ class PostCreateResponseSchema(BaseModel):
     creation_time: float
     updated: float | None
     name: str
-    text: str
+    text: str | None
     media: list[PostMediaResponseSchema]
     creator: PostUserResponseSchema
 
@@ -53,7 +53,7 @@ class PostGetResponseSchema(BaseModel):
     creation_time: float
     updated: float | None
     name: str
-    text: str
+    text: str | None
     media: list[PostMediaResponseSchema]
     creator: PostUserResponseSchema
 
@@ -63,7 +63,7 @@ class PostUpdateResponseSchema(BaseModel):
     creation_time: float
     updated: float | None
     name: str
-    text: str
+    text: str | None
     media: list[PostMediaResponseSchema]
     creator: PostUserResponseSchema
 
@@ -73,7 +73,7 @@ class PostDeleteResponseSchema(BaseModel):
     creation_time: float
     updated: float | None
     name: str
-    text: str
+    text: str | None
     media: list[PostMediaResponseSchema]
     creator: PostUserResponseSchema
 
@@ -115,9 +115,23 @@ class PostService:
                 status_code=403,
                 detail='user is not the post creator'
             )
+        if 'media' in values:
+            media_objs = []
+            for m in values['media']:
+                m_obj = await MediaRepository().get_by_id(m)
+                if not m_obj:
+                    raise HTTPException(
+                        status_code=404,
+                        detail=f'media not found: {m}'
+                    )
+                media_objs.append(m_obj)
+            values['media'] = media_objs
+            await PostRepository().update(
+                db_obj,
+                media=[]
+            )
         await PostRepository().update(
             db_obj,
-            creator_id=creator_id,
             updated_time=naive_utcnow(),
             **values
         )
@@ -201,9 +215,9 @@ class PostService:
                 detail='user is not the post creator'
             )
         media = [
-                    PostMediaResponseSchema.from_sqlalchemy(m)
-                    for m in db_obj.media
-                ]
+            PostMediaResponseSchema.from_sqlalchemy(m)
+            for m in db_obj.media
+        ]
         db_obj = await PostRepository().update(db_obj, media=[])
         db_obj = await PostRepository().delete(db_obj)
         return PostDeleteResponseSchema(

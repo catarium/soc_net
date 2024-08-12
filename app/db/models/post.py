@@ -22,9 +22,9 @@ class Post(Base):
     updated_time: Mapped[datetime | None] = mapped_column(TIMESTAMP(timezone=False),
                                                           nullable=True)
     name: Mapped[str] = mapped_column(String(120))
-    text: Mapped[str]
+    text: Mapped[Optional[str]] = mapped_column(nullable=True)
     media: Mapped[List["Media"]] = relationship(
         lazy='selectin',
         secondary='media_posts',
-        uselist=True
+        uselist=True,
     )

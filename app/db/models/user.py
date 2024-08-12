@@ -18,13 +18,14 @@ from app.db.base_class import Base
 
 class Subscription(Base):
     __tablename__ = 'subscriptions'
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"),
-                                         primary_key=True
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id",),
+                                         primary_key=True,
                                          )
     user: Mapped["User"] = relationship(
         lazy='joined',
         uselist=False,
-        foreign_keys=[user_id]
+        foreign_keys=[user_id],
+        viewonly=True,
     )
     subscriber_id: Mapped[int] = mapped_column(ForeignKey("users.id"),
                                                primary_key=True
@@ -32,7 +33,8 @@ class Subscription(Base):
     subscriber: Mapped["User"] = relationship(
         lazy='joined',
         uselist=False,
-        foreign_keys=[subscriber_id]
+        foreign_keys=[subscriber_id],
+        viewonly=True,
     )
 
 
@@ -47,5 +49,5 @@ class User(Base):
         secondary='subscriptions',
         primaryjoin=(Subscription.subscriber_id == id),
         secondaryjoin=(Subscription.user_id == id),
-        join_depth=2
+        join_depth=2,
     )

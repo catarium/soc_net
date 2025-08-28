@@ -177,8 +177,11 @@ class PostService:
                   offset=0,
                   limit=10,
                   created_after=0,
-                  created_before=aware_utcnow().timestamp(),
+                  created_before=None,
                   **filters) -> List[PostGetResponseSchema]:
+        if not created_before:
+            created_before = aware_utcnow().timestamp()
+        print("CREATED BEFORE", created_before)
         filters = {k: v for k, v in filters.items() if v is not None}
         db_objs = await PostRepository().select(
             custom_where=(and_(

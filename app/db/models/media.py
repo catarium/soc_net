@@ -11,15 +11,16 @@ from app.db.base_class import Base
 
 class MediaPosts(Base):
     __tablename__ = 'media_posts'
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     media_id: Mapped[int] = mapped_column(ForeignKey('media.filename'),
                                           primary_key=True
                                           )
 
-    # media: Mapped["Media"] = relationship(
-    #     lazy='joined',
-    #     uselist=False,
-    #     foreign_keys=[media_id]
-    # )
+    media: Mapped["Media"] = relationship(
+        lazy='joined',
+        uselist=False,
+        foreign_keys=[media_id]
+    )
     post_id: Mapped[int] = mapped_column(ForeignKey('posts.id'),
                                          primary_key=True)
     # post: Mapped["Post"] = relationship(
@@ -32,6 +33,8 @@ class MediaPosts(Base):
 
 class MediaComments(Base):
     __tablename__ = 'media_comments'
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     media_id: Mapped[int] = mapped_column(ForeignKey('media.filename'),
                                           primary_key=True
                                           )

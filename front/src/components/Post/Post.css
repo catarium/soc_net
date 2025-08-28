@@ -1,0 +1,17 @@
+.Post {
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    background-color: gray;
+    color: white;
+}
+
+.PostHeader {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.PostTitle {
+    font-size: 1.5em;
+}

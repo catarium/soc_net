@@ -2,6 +2,8 @@ from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.middleware import Middleware
+
+from app.exceptions.http_exception_handler import register_http_exception_handler
 from .routes import main_router
 import logging
 
@@ -18,5 +20,7 @@ app = FastAPI(root_path='/api')
 #     allow_headers=["*"],
 # )
 app.add_middleware(SessionMiddleware, secret_key='test')
+
+register_http_exception_handler(app)
 
 app.include_router(main_router)

@@ -14,7 +14,7 @@ router = APIRouter(prefix='')
 class PostGetRequestSchema(BaseModel):
     name: Optional[str] = None
     creator_id: Optional[int] = None
-    created_before: Optional[float] = aware_utcnow().timestamp()
+    created_before: Optional[float] = None
     created_after: Optional[float] = 0
     offset: int = 0
     limit: int = Field(default=10, ge=1, le=30)

@@ -1,0 +1,20 @@
+.Header {
+    background-color: #93bdbd;
+    position: fixed;
+    right: 0;
+    left: 0;
+    top: 0;
+    padding: 5px;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+}
+
+.HeaderEl {
+    /* width: 60%; */
+}
+
+
+.SearchInput {
+    width: 100%;
+}

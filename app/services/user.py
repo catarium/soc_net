@@ -1,56 +1,96 @@
-from typing import List
+from typing import List, Optional
 
 from app.db.models.user import User
 from app.db.repositories.subscription import SubscriptionRepository
 from app.db.repositories.user import UserRepository
+from app.db.repositories.media import MediaRepository
 from app.utils.password_hashing.hash_password import get_password_hash
 
 from pydantic import BaseModel, Field
 from fastapi import HTTPException
 
 
+class ProfilePictureCreatorResponseSchema(BaseModel):
+    id: int
+    name: str
+
+    @staticmethod
+    def from_sqlalchemy(orm_model):
+        return ProfilePictureCreatorResponseSchema(
+            id=orm_model.id,
+            name=orm_model.name
+        )
+
+
+class ProfilePictureResponseSchema(BaseModel):
+    creator: ProfilePictureCreatorResponseSchema
+    content_type: str
+    filename: str
+
+    @staticmethod
+    def from_sqlalchemy(orm_model):
+        if not orm_model:
+            return None
+        return ProfilePictureResponseSchema(
+            creator=ProfilePictureCreatorResponseSchema.from_sqlalchemy(
+                orm_model.creator),
+            content_type=orm_model.content_type,
+            filename=orm_model.filename
+        )
+
+
 class UserCreateResponseSchema(BaseModel):
     id: int
     name: str
     password: str
+    profile_picture: Optional[ProfilePictureResponseSchema]
 
 
 class AdminUserGetResponseSchema(BaseModel):
     id: int
     name: str
     password: str
+    profile_picture: Optional[ProfilePictureResponseSchema]
 
 
 class SubscriptionUserGetResponseSchema(BaseModel):
     id: int
     name: str
+    profile_picture: Optional[ProfilePictureResponseSchema]
 
 
 class UserGetResponseSchema(BaseModel):
     id: int
     name: str
     subscriptions: List[SubscriptionUserGetResponseSchema]
+    profile_picture: Optional[ProfilePictureResponseSchema]
 
 
 class PersonalUserGetResponseSchema(BaseModel):
     id: int
     name: str
     subscriptions: List[SubscriptionUserGetResponseSchema]
+    profile_picture: Optional[ProfilePictureResponseSchema]
 
 
 class UserService:
     async def create(self, name: str,
-                     password: str) -> UserCreateResponseSchema:
+                     password: str, profile_picture: str) -> UserCreateResponseSchema:
+        profile_picture_obj = await MediaRepository().get_by_id(profile_picture)
+        if not profile_picture_obj:
+            raise HTTPException(status_code=404, detail="media not found")
         hashed_password = get_password_hash(password)
         db_obj = await UserRepository().get_by_name(name)
         if db_obj:
             raise HTTPException(status_code=400, detail='name is occupied')
         db_obj = await UserRepository().create(name=name,
-                                               password=hashed_password)
+                                               password=hashed_password, profile_picture=profile_picture_obj)
         return UserCreateResponseSchema(
             id=db_obj.id,
             name=db_obj.name,
-            password=db_obj.password
+            password=db_obj.password,
+            profile_picture=ProfilePictureResponseSchema.from_sqlalchemy(
+                db_obj.profile_picture)
         )
 
     async def get_by_id_admin(self, user_id) -> AdminUserGetResponseSchema:
@@ -67,6 +107,8 @@ class UserService:
             id=db_obj.id,
             name=db_obj.name,
             password=db_obj.password,
+            profile_picture=ProfilePictureResponseSchema.from_sqlalchemy(
+                db_obj.profile_picture),
             subscriptions=[SubscriptionUserGetResponseSchema(id=sbp.id,
                                                              name=sbp.name
                                                              )
@@ -81,6 +123,8 @@ class UserService:
         return PersonalUserGetResponseSchema(
             id=db_obj.id,
             name=db_obj.name,
+            profile_picture=ProfilePictureResponseSchema.from_sqlalchemy(
+                db_obj.profile_picture),
             subscriptions=[SubscriptionUserGetResponseSchema(id=sbp.id,
                                                              name=sbp.name
                                                              )
@@ -101,6 +145,8 @@ class UserService:
         return UserGetResponseSchema(
             id=db_obj.id,
             name=db_obj.name,
+            profile_picture=ProfilePictureResponseSchema.from_sqlalchemy(
+                db_obj.profile_picture),
             subscriptions=[SubscriptionUserGetResponseSchema(id=sbp.id,
                                                              name=sbp.name
                                                              )
@@ -125,6 +171,8 @@ class UserService:
         return PersonalUserGetResponseSchema(
             id=db_obj.id,
             name=db_obj.name,
+            profile_picture=ProfilePictureResponseSchema.from_sqlalchemy(
+                db_obj.profile_picture),
             subscriptions=[SubscriptionUserGetResponseSchema(id=sbp.id,
                                                              name=sbp.name
                                                              )
@@ -146,6 +194,8 @@ class UserService:
         return PersonalUserGetResponseSchema(
             id=db_obj.id,
             name=db_obj.name,
+            profile_picture=ProfilePictureResponseSchema.from_sqlalchemy(
+                db_obj.profile_picture),
             subscriptions=[SubscriptionUserGetResponseSchema(id=sbp.id,
                                                              name=sbp.name
                                                              )
@@ -161,9 +211,15 @@ class UserService:
         )
         if type == 'user_id':
             return [SubscriptionUserGetResponseSchema(id=s.subscriber.id,
+                                                      profile_picture=ProfilePictureResponseSchema.from_sqlalchemy
+                                        (
+                                                          s.profile_picture),
                                                       name=s.subscriber.name)
                     for s in subscriptions]
         elif type == 'subscriber_id':
             return [SubscriptionUserGetResponseSchema(id=s.user.id,
+                                                      profile_picture=ProfilePictureResponseSchema.from_sqlalchemy
+                                        (
+                                                          s.profile_picture),
                                                       name=s.user.name)
                     for s in subscriptions]

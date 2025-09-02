@@ -44,6 +44,13 @@ class User(Base):
     name: Mapped[str] = mapped_column(String(30), unique=True)
     admin: Mapped[bool] = mapped_column(server_default='false')
     password: Mapped[str] = mapped_column(String(1024))
+    profile_picture_id: Mapped[int] = mapped_column(ForeignKey('media.filename'),
+                                                    nullable=True,
+                                                    )
+    profile_picture: Mapped["Media"] = relationship(
+        foreign_keys=[profile_picture_id],
+        lazy='selectin'
+    )
     subscriptions: Mapped[List["User"]] = relationship(
         lazy='selectin',
         secondary='subscriptions',

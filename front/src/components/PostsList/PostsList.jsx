@@ -11,6 +11,8 @@ export default function PostsList({data}) {
                         author={item.creator.name}
                         text={item.text}
                         images={item.media.map((media) => media.filename)}
+                        profilePicture={item.creator.profile_picture ? item.creator.profile_picture.filename : ""}
+                        authorId={item.creator.id}
                     />
                 ),
             )}

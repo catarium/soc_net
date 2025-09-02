@@ -57,7 +57,8 @@ class Media(Base):
     creator_id: Mapped[int] = mapped_column(ForeignKey('users.id'))
     creator: Mapped["User"] = relationship(
         lazy='joined',
-        uselist=False
+        uselist=False,
+        foreign_keys=[creator_id]
     )
     content_type: Mapped[str] = mapped_column()
     _filename: Mapped[str] = mapped_column(

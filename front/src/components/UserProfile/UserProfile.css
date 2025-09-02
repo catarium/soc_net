@@ -1,0 +1,15 @@
+.UserCard {
+    background-color: gray;
+    color: white;
+    display: flex;
+    flex-direction: row;
+    padding: 15px;
+    justify-content: space-between;
+}
+
+.ProfilePicture {
+  object-fit: cover;
+  background: 50% 50% no-repeat; /* 50% 50% centers image in div */
+  width: 250px;
+  height: 250px;
+}

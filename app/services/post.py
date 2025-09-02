@@ -1,6 +1,6 @@
 from copy import deepcopy
 from datetime import datetime
-from typing import List
+from typing import List, Optional
 
 from fastapi import HTTPException
 from pydantic import BaseModel
@@ -12,29 +12,47 @@ from app.db.repositories.post import PostRepository
 from app.utils.datetime_utils import aware_utcnow, naive_utcnow
 
 
-class PostUserResponseSchema(BaseModel):
+class PostMediaUserResponseSchema(BaseModel):
     id: int
     name: str
 
     @staticmethod
     def from_sqlalchemy(orm_model):
-        return PostUserResponseSchema(
+        return PostMediaUserResponseSchema(
             id=orm_model.id,
-            name=orm_model.name
+            name=orm_model.name,
         )
 
 
 class PostMediaResponseSchema(BaseModel):
-    creator: PostUserResponseSchema
+    creator: PostMediaUserResponseSchema
     content_type: str
     filename: str
 
     @staticmethod
     def from_sqlalchemy(orm_model):
+        if not orm_model:
+            return None
         return PostMediaResponseSchema(
-            creator=PostUserResponseSchema.from_sqlalchemy(orm_model.creator),
+            creator=PostMediaUserResponseSchema.from_sqlalchemy(
+                orm_model.creator),
             content_type=orm_model.content_type,
             filename=orm_model.filename
+        )
+
+
+class PostUserResponseSchema(BaseModel):
+    id: int
+    name: str
+    profile_picture: (PostMediaResponseSchema | None)
+
+    @staticmethod
+    def from_sqlalchemy(orm_model):
+        print("MyLog", PostMediaResponseSchema.from_sqlalchemy(orm_model.profile_picture))
+        return PostUserResponseSchema(
+            id=orm_model.id,
+            name=orm_model.name,
+            profile_picture=PostMediaResponseSchema.from_sqlalchemy(orm_model.profile_picture)
         )
 
 

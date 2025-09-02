@@ -6,8 +6,3 @@
     flex-direction: column;
     gap: 1em;
 }
-
-.PostImage img {
-    max-width: 100%;
-    max-height: 768px;
-}

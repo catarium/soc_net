@@ -19,9 +19,6 @@ export default function Header() {
                 <div className="HeaderEl">
                     {<Search />}
                 </div>
-                <div className="HeaderEl">
-                    <a href="/profile">Profile</a>
-                </div>
             </div>
         </>
     );
